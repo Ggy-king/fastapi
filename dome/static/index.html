@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>两屏互联 · Phase 0</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      max-width: 480px; margin: 0 auto; padding: 24px 16px;
+      background: #fafafa; color: #1a1a1a;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .status { font-size: 12px; color: #888; margin-bottom: 20px; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ccc; margin-right: 6px; }
+    .dot.on { background: #22c553; }
+    button {
+      width: 100%; padding: 22px; font-size: 18px; font-weight: 600;
+      background: #4f46e5; color: white; border: none; border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+    button:active { transform: scale(0.98); }
+    #log { margin-top: 24px; }
+    .bubble {
+      background: white; padding: 12px 16px; border-radius: 12px;
+      margin: 8px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border-left: 4px solid #4f46e5; animation: pop 0.2s ease-out;
+    }
+    @keyframes pop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+  <h1>两屏互联</h1>
+  <div class="status"><span class="dot" id="dot"></span><span id="status">连接中…</span></div>
+  <button id="btn">点我，让另一块屏知道</button>
+  <div id="log"></div>
+
+<script>
+  const ws = new WebSocket(`ws://${location.host}/ws`);
+  const dot = document.getElementById('dot');
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('btn');
+  const log = document.getElementById('log');
+
+  ws.onopen = () => { dot.classList.add('on'); statusEl.textContent = '已连接'; };
+  ws.onclose = () => { dot.classList.remove('on'); statusEl.textContent = '断开，重连中…'; setTimeout(() => location.reload(), 1500); };
+
+  btn.onclick = () => {
+    ws.send(JSON.stringify({ text: '📱 手机刚才点了我！' }));
+  };
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    const div = document.createElement('div');
+    div.className = 'bubble';
+    div.textContent = data.text;
+    log.prepend(div);
+  };
+</script>
+</body>
+</html>
